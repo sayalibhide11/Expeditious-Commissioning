@@ -32,7 +32,7 @@ class SplashScreen extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: Image.asset(
-          '../assets/autoCooper_Logo_Color_RGB_old.png',
+          'assets/images/autoCooper_Logo_Color_RGB_old.png',
           width: 300, // Image width
           height: 300, // Image height
         ),
