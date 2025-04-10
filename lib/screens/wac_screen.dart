@@ -76,6 +76,32 @@ class _WACScreenState extends State<WACScreen> {
             ),
           ),
 
+          // Button to delete all WACs
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0),
+            child: Container(
+              alignment: Alignment.centerRight,
+              margin: const EdgeInsets.only(right: 16.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, // Button color
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                ),
+                onPressed: () async {
+                  // Delete all entries in the WAC table
+                  await dbHelper.deleteAllWacs();
+                  _fetchWacList(); // Refresh the list
+                },
+                child: Text(
+                  'Delete All WACs',
+                  style: TextStyle(
+                    color: const Color.fromARGB(255, 31, 30, 30),
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+          ),
           // List of WACs below the "WAC List" text
           Expanded(
             child: ListView.builder(
@@ -85,6 +111,14 @@ class _WACScreenState extends State<WACScreen> {
                 return ListTile(
                   title: Text(wac['macid']), // Display MAC ID
                   subtitle: Text(wac['ip']), // Display IP Address
+                  trailing: IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () async {
+                    // Delete the specific WAC entry
+                    await dbHelper.deleteWac(wac['id']);
+                    _fetchWacList(); // Refresh the list
+                  },
+                  ),
                 );
               },
             ),

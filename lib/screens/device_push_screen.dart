@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'qr_scanner_screen.dart';
 import 'wac_screen.dart'; // Make sure to import the necessary WACScreen widget.
+import '../helpers/db_helper.dart'; // Import the DBHelper class.
 
 class DeviceListScreen extends StatefulWidget {
   @override
@@ -8,26 +9,20 @@ class DeviceListScreen extends StatefulWidget {
 }
 
 class _DeviceListScreenState extends State<DeviceListScreen> {
+  final DBHelper dbHelper = DBHelper();
   // Sample list of Device IDs
-  List<String> deviceIds = [
-    'Device 001',
-    'Device 002',
-    'Device 003',
-    'Device 004',
-    'Device 005',
-  ];
+  List<String> deviceList = [];
 
-  // Function to delete all devices
-  void _deleteAllDevices() {
-    setState(() {
-      deviceIds.clear(); // Clear all items in the list
-    });
+  @override
+  void initState() {
+    super.initState();
+    _fetchWacList();
   }
 
-  // Function to delete a single device by index
-  void _deleteDevice(int index) {
+  Future<void> _fetchWacList() async {
+    final data = await dbHelper.getDevices();
     setState(() {
-      deviceIds.removeAt(index); // Remove device at given index
+      deviceList = data;
     });
   }
 
@@ -43,10 +38,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
             // Add both buttons here (Scan and Delete All)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildScanWacButton(context),
-                _buildDeleteAllButton(),
-              ],
+              children: [_buildScanWacButton(context), _buildDeleteAllButton()],
             ),
             const SizedBox(height: 20),
             _buildDeviceListTitle(),
@@ -63,9 +55,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
 
   // AppBar widget
   PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      title: const Text('Device List'),
-    );
+    return AppBar(title: const Text('Device List'));
   }
 
   // Button to navigate to the QR Scanner screen
@@ -75,9 +65,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
         // Navigate to QRScannerScreen
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => QRScannerScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => QRScannerScreen()),
         );
       },
       child: const Text('Scan Device'),
@@ -87,7 +75,11 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   // Button to delete all devices
   Widget _buildDeleteAllButton() {
     return ElevatedButton(
-      onPressed: _deleteAllDevices,
+      onPressed: () async {
+        // Delete all entries in the WAC table
+        await dbHelper.deleteAllDevices();
+        _fetchWacList(); // Refresh the list
+      },
       child: const Text('Delete All Devices'),
     );
   }
@@ -96,10 +88,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   Widget _buildDeviceListTitle() {
     return const Text(
       'Device List:',
-      style: TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-      ),
+      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
     );
   }
 
@@ -107,13 +96,16 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   Widget _buildDeviceList() {
     return Expanded(
       child: ListView.builder(
-        itemCount: deviceIds.length,
+        itemCount: deviceList.length,
         itemBuilder: (context, index) {
           return ListTile(
-            title: Text(deviceIds[index]),
+            title: Text(deviceList[index]),
             trailing: IconButton(
               icon: const Icon(Icons.delete),
-              onPressed: () => _deleteDevice(index), // Delete individual device
+              onPressed: () async {
+              await dbHelper.deleteDevice(deviceList[index]);
+              _fetchWacList(); // Refresh the list after deletion
+              },
             ),
           );
         },
@@ -125,10 +117,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   Widget _buildActionButtons(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildBackButton(context),
-        _buildPushButton(),
-      ],
+      children: [_buildBackButton(context), _buildPushButton()],
     );
   }
 
