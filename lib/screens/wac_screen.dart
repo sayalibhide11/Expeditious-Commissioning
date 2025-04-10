@@ -1,15 +1,29 @@
+// filepath: d:\Flutter\Expeditious-Commissioning\lib\screens\wac_screen.dart
 import 'package:flutter/material.dart';
+import '../helpers/db_helper.dart';
 import 'qr_scanner_screen.dart'; // Import QRScannerScreen
 
-class WACScreen extends StatelessWidget {
-  // Sample list of WACs
-  final List<String> wacList = [
-    'WAC 001',
-    'WAC 002',
-    'WAC 003',
-    'WAC 004',
-    'WAC 005',
-  ];
+class WACScreen extends StatefulWidget {
+  @override
+  _WACScreenState createState() => _WACScreenState();
+}
+
+class _WACScreenState extends State<WACScreen> {
+  final DBHelper dbHelper = DBHelper();
+  List<Map<String, dynamic>> wacList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchWacList();
+  }
+
+  Future<void> _fetchWacList() async {
+    final data = await dbHelper.getWacs();
+    setState(() {
+      wacList = data;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +62,7 @@ class WACScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Text "WAC List" below the button
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -61,14 +75,16 @@ class WACScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // List of WACs below the "WAC List" text
           Expanded(
             child: ListView.builder(
               itemCount: wacList.length,
               itemBuilder: (context, index) {
+                final wac = wacList[index];
                 return ListTile(
-                  title: Text(wacList[index]),
+                  title: Text(wac['macid']), // Display MAC ID
+                  subtitle: Text(wac['ip']), // Display IP Address
                 );
               },
             ),
