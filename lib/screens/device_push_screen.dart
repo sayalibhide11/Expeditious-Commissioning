@@ -2,15 +2,34 @@ import 'package:flutter/material.dart';
 import 'qr_scanner_screen.dart';
 import 'wac_screen.dart'; // Make sure to import the necessary WACScreen widget.
 
-class DeviceListScreen extends StatelessWidget {
+class DeviceListScreen extends StatefulWidget {
+  @override
+  _DeviceListScreenState createState() => _DeviceListScreenState();
+}
+
+class _DeviceListScreenState extends State<DeviceListScreen> {
   // Sample list of Device IDs
-  final List<String> deviceIds = [
+  List<String> deviceIds = [
     'Device 001',
     'Device 002',
     'Device 003',
     'Device 004',
     'Device 005',
   ];
+
+  // Function to delete all devices
+  void _deleteAllDevices() {
+    setState(() {
+      deviceIds.clear(); // Clear all items in the list
+    });
+  }
+
+  // Function to delete a single device by index
+  void _deleteDevice(int index) {
+    setState(() {
+      deviceIds.removeAt(index); // Remove device at given index
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +40,14 @@ class DeviceListScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildScanWacButton(context),
+            // Add both buttons here (Scan and Delete All)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildScanWacButton(context),
+                _buildDeleteAllButton(),
+              ],
+            ),
             const SizedBox(height: 20),
             _buildDeviceListTitle(),
             const SizedBox(height: 10),
@@ -46,15 +72,23 @@ class DeviceListScreen extends StatelessWidget {
   Widget _buildScanWacButton(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
-      // Navigate to ScannedWACScreen instead of popping back
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => QRScannerScreen(),
-        ),
-      );
-    },
+        // Navigate to QRScannerScreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => QRScannerScreen(),
+          ),
+        );
+      },
       child: const Text('Scan Device'),
+    );
+  }
+
+  // Button to delete all devices
+  Widget _buildDeleteAllButton() {
+    return ElevatedButton(
+      onPressed: _deleteAllDevices,
+      child: const Text('Delete All Devices'),
     );
   }
 
@@ -77,6 +111,10 @@ class DeviceListScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           return ListTile(
             title: Text(deviceIds[index]),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () => _deleteDevice(index), // Delete individual device
+            ),
           );
         },
       ),

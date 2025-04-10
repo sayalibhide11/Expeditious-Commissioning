@@ -14,7 +14,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  mobile_scanner: ^6.0.7
+  mobile_scanner: ^3.5.1
 
 dev_dependencies:
   flutter_test:
