@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'scanned_wac_screen.dart'; // You'll create this next
+import 'scanned_wac_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -61,16 +61,9 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               child: const Text("Cancel"),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ScannedWACScreen(scannedWAC: rawValue),
-                  ),
-                ).then((_) {
-                  setState(() => _isScanCompleted = false);
-                });
+               onPressed: () {
+                Navigator.pop(context); // Close the dialog
+                Navigator.pop(context, rawValue); // Return the scanned value
               },
               child: const Text("Continue"),
             ),

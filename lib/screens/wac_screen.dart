@@ -1,7 +1,9 @@
 // filepath: d:\Flutter\Expeditious-Commissioning\lib\screens\wac_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_project/screens/device_push_screen.dart';
 import '../helpers/db_helper.dart';
 import 'qr_scanner_screen.dart'; // Import QRScannerScreen
+import 'scanned_wac_screen.dart'; // Import ScannedWACScreen
 
 class WACScreen extends StatefulWidget {
   @override
@@ -20,6 +22,7 @@ class _WACScreenState extends State<WACScreen> {
 
   Future<void> _fetchWacList() async {
     final data = await dbHelper.getWacs();
+    print('Fetched WAC List: $data'); // Debug: Print the fetched data
     setState(() {
       wacList = data;
     });
@@ -28,9 +31,7 @@ class _WACScreenState extends State<WACScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('WAC List'),
-      ),
+      appBar: AppBar(title: Text('WAC List')),
       body: Column(
         children: [
           // Button at the top-center of the screen
@@ -43,21 +44,26 @@ class _WACScreenState extends State<WACScreen> {
                   backgroundColor: Colors.red, // Button color
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                 ),
-                onPressed: () {
-                  // Navigate to QR code scanner screen when the button is pressed
-                  Navigator.push(
+                onPressed: () async {
+                  final scannedValue = await Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => QRScannerScreen(),
-                    ),
+                    MaterialPageRoute(builder: (context) => QRScannerScreen()),
                   );
+
+                  if (scannedValue != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                ScannedWACScreen(scannedWAC: scannedValue),
+                      ),
+                    );
+                  }
                 },
                 child: Text(
                   'Scan WAC',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ),
             ),
@@ -109,16 +115,32 @@ class _WACScreenState extends State<WACScreen> {
               itemBuilder: (context, index) {
                 final wac = wacList[index];
                 return ListTile(
-                  title: Text(wac['macid']), // Display MAC ID
-                  subtitle: Text(wac['ip']), // Display IP Address
+                  title: Text(
+                    wac['macid'] ?? 'No MAC ID',
+                  ), // Handle null values
+                  subtitle: Text(
+                    wac['ip'] ?? 'No IP Address',
+                  ), // Handle null values
                   trailing: IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
-                  onPressed: () async {
-                    // Delete the specific WAC entry
-                    await dbHelper.deleteWac(wac['id']);
-                    _fetchWacList(); // Refresh the list
-                  },
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      // Delete the specific WAC entry
+                      await dbHelper.deleteWac(wac['id']);
+                      _fetchWacList(); // Refresh the list
+                    },
                   ),
+                  onTap: () {
+                    // Navigate to DevicePushScreen with the WAC ID
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => DeviceListScreen(
+                              wacId: wac['id'],
+                            ), // Pass WAC ID
+                      ),
+                    );
+                  },
                 );
               },
             ),

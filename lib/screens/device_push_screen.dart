@@ -4,6 +4,8 @@ import 'wac_screen.dart'; // Make sure to import the necessary WACScreen widget.
 import '../helpers/db_helper.dart'; // Import the DBHelper class.
 
 class DeviceListScreen extends StatefulWidget {
+  final String wacId;
+  DeviceListScreen({required this.wacId});
   @override
   _DeviceListScreenState createState() => _DeviceListScreenState();
 }
@@ -16,10 +18,10 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchWacList();
+    _fetchDeviceList();
   }
 
-  Future<void> _fetchWacList() async {
+  Future<void> _fetchDeviceList() async {
     final data = await dbHelper.getDevices();
     setState(() {
       deviceList = data;
@@ -61,12 +63,22 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   // Button to navigate to the QR Scanner screen
   Widget _buildScanWacButton(BuildContext context) {
     return ElevatedButton(
-      onPressed: () {
-        // Navigate to QRScannerScreen
-        Navigator.push(
+      onPressed: () async {
+        final scannedValue = await Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => QRScannerScreen()),
         );
+
+        if (scannedValue != null) {
+          final dbHelper = DBHelper();
+          await dbHelper.insertDevice({
+            'id': DateTime.now().toIso8601String(), // Unique ID
+            'macid': scannedValue, // Use the scanned value
+          });
+
+          // Refresh the device list
+          _fetchDeviceList();
+        }
       },
       child: const Text('Scan Device'),
     );
@@ -78,7 +90,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
       onPressed: () async {
         // Delete all entries in the WAC table
         await dbHelper.deleteAllDevices();
-        _fetchWacList(); // Refresh the list
+        _fetchDeviceList(); // Refresh the list
       },
       child: const Text('Delete All Devices'),
     );
@@ -103,8 +115,8 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () async {
-              await dbHelper.deleteDevice(deviceList[index]);
-              _fetchWacList(); // Refresh the list after deletion
+                await dbHelper.deleteDevice(deviceList[index]);
+                _fetchDeviceList(); // Refresh the list after deletion
               },
             ),
           );

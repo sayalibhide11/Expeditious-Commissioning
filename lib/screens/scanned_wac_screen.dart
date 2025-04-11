@@ -18,7 +18,7 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
   @override
   void initState() {
     super.initState();
-    macAddressController.text = "00:11:22:33:44:55"; // Example MAC address
+    macAddressController.text = widget.scannedWAC; // Autofill MAC ID
   }
 
   @override
@@ -88,7 +88,7 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DeviceListScreen(),
+                        builder: (context) => DeviceListScreen(wacId: macId),
                       ),
                     );
                   },
