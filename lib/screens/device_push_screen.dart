@@ -12,8 +12,8 @@ class DeviceListScreen extends StatefulWidget {
 
 class _DeviceListScreenState extends State<DeviceListScreen> {
   final DBHelper dbHelper = DBHelper();
-  // Sample list of Device IDs
-  List<String> deviceList = [];
+
+  List<Map<String, dynamic>> deviceList = [];
 
   @override
   void initState() {
@@ -22,7 +22,15 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   }
 
   Future<void> _fetchDeviceList() async {
-    final data = await dbHelper.getDevices();
+    // Fetch device IDs associated with the current WAC ID
+    final wacDeviceMappings = await dbHelper.getWacDeviceMappings(widget.wacId);
+    final deviceIds =
+        wacDeviceMappings
+            .map((mapping) => mapping['device_ids'] as String)
+            .toList();
+    // Fetch devices matching the retrieved device IDs
+    final data = await dbHelper.getDevicesByIds(deviceIds);
+
     setState(() {
       deviceList = data;
     });
@@ -71,9 +79,14 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
 
         if (scannedValue != null) {
           final dbHelper = DBHelper();
+          final deviceId = DateTime.now().toIso8601String(); // Generate a unique device ID
           await dbHelper.insertDevice({
-            'id': DateTime.now().toIso8601String(), // Unique ID
+            'id': deviceId,
             'macid': scannedValue, // Use the scanned value
+          });
+          await dbHelper.insertWacDeviceMapping({
+            'wacids': widget.wacId,
+            'device_ids': deviceId,
           });
 
           // Refresh the device list
@@ -110,12 +123,16 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
       child: ListView.builder(
         itemCount: deviceList.length,
         itemBuilder: (context, index) {
+          final device =
+              deviceList[index]; // Extract the map for the current device
           return ListTile(
-            title: Text(deviceList[index]),
+            title: Text(device['macid'] ?? 'No MAC ID'), // Display the MAC ID
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () async {
-                await dbHelper.deleteDevice(deviceList[index]);
+                await dbHelper.deleteDevice(
+                  device['id'],
+                ); // Delete the device by ID
                 _fetchDeviceList(); // Refresh the list after deletion
               },
             ),

@@ -11,6 +11,12 @@ class ScannedWACScreen extends StatefulWidget {
   _ScannedWACScreenState createState() => _ScannedWACScreenState();
 }
 
+bool _isValidIp(String ip) {
+  final ipRegex = RegExp(
+      r'^((25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$');
+  return ipRegex.hasMatch(ip);
+}
+
 class _ScannedWACScreenState extends State<ScannedWACScreen> {
   TextEditingController ipAddressController = TextEditingController();
   TextEditingController macAddressController = TextEditingController();
@@ -18,7 +24,19 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
   @override
   void initState() {
     super.initState();
-    macAddressController.text = widget.scannedWAC; // Autofill MAC ID
+    final scannedData = widget.scannedWAC;
+    final macRegex = RegExp(r'MAC:\s*([A-Fa-f0-9:]{17})');
+    final match = macRegex.firstMatch(scannedData);
+
+    if (match != null) {
+      macAddressController.text = match.group(1)!; // Autofill MAC ID
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Invalid MAC ID')),
+      );
+      });
+    }
   }
 
   @override
@@ -47,9 +65,15 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
             TextField(
               controller: ipAddressController,
               decoration: InputDecoration(
-                labelText: 'IP Address',
-                border: OutlineInputBorder(),
+              labelText: 'IP Address',
+              border: OutlineInputBorder(),
+              errorText: _isValidIp(ipAddressController.text)
+                ? null
+                : 'Invalid IP Address',
               ),
+              onChanged: (value) {
+              setState(() {}); // Trigger UI update for validation
+              },
             ),
             SizedBox(height: 40),
             Row(
@@ -77,8 +101,9 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
 
                     // Insert data into the `wacs` table
                     final dbHelper = DBHelper();
+                    final wacId = DateTime.now().toIso8601String();
                     await dbHelper.insertWac({
-                      'id': DateTime.now().toIso8601String(), // Unique ID
+                      'id': wacId,
                       'macid': macId,
                       'ip': ipAddress,
                       'ispushrequired': 0, // Default value for ispushrequired
@@ -88,7 +113,7 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DeviceListScreen(wacId: macId),
+                        builder: (context) => DeviceListScreen(wacId: wacId),
                       ),
                     );
                   },

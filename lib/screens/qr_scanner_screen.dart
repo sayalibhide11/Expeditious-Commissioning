@@ -39,36 +39,42 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
     final Barcode barcode = capture.barcodes.first;
     final String? rawValue = barcode.rawValue;
+    final BarcodeFormat? format = barcode.format;
 
     if (rawValue != null && rawValue.isNotEmpty) {
       setState(() {
         _isScanCompleted = true;
       });
 
-      print('Scanned: $rawValue');
+      print('Scanned Value: $rawValue');
+      print('Barcode Format: $format'); // Debug: Print the barcode format
 
       showDialog(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text("QR Code Scanned"),
-          content: Text(rawValue),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                setState(() => _isScanCompleted = false);
-              },
-              child: const Text("Cancel"),
+        builder:
+            (_) => AlertDialog(
+              title: const Text("Barcode Scanned"),
+              content: Text('Value: $rawValue\nFormat: $format'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() => _isScanCompleted = false);
+                  },
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close the dialog
+                    Navigator.pop(
+                      context,
+                      rawValue,
+                    ); // Return the scanned value
+                  },
+                  child: const Text("Continue"),
+                ),
+              ],
             ),
-            ElevatedButton(
-               onPressed: () {
-                Navigator.pop(context); // Close the dialog
-                Navigator.pop(context, rawValue); // Return the scanned value
-              },
-              child: const Text("Continue"),
-            ),
-          ],
-        ),
       );
     }
   }
@@ -90,7 +96,9 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               valueListenable: _controller.torchState,
               builder: (context, torchState, child) {
                 return Icon(
-                  torchState == TorchState.on ? Icons.flash_on : Icons.flash_off,
+                  torchState == TorchState.on
+                      ? Icons.flash_on
+                      : Icons.flash_off,
                 );
               },
             ),
@@ -100,10 +108,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       ),
       body: Stack(
         children: [
-          MobileScanner(
-            controller: _controller,
-            onDetect: _handleDetection,
-          ),
+          MobileScanner(controller: _controller, onDetect: _handleDetection),
           Center(
             child: Container(
               width: 280,
