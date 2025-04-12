@@ -35,6 +35,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   bool _isScanCompleted = false;
 
   void _handleDetection(BarcodeCapture capture) {
+
     if (_isScanCompleted) return;
 
     final Barcode barcode = capture.barcodes.first;
@@ -45,9 +46,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       setState(() {
         _isScanCompleted = true;
       });
-
-      print('Scanned Value: $rawValue');
-      print('Barcode Format: $format'); // Debug: Print the barcode format
 
       showDialog(
         context: context,

@@ -13,7 +13,7 @@
     </queries>
 
     <application
-        android:label="flutter_project"
+        android:label="Expeditious_Commissioning"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

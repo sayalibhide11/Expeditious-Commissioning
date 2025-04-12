@@ -1,6 +1,6 @@
 // filepath: d:\Flutter\Expeditious-Commissioning\lib\screens\wac_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_project/screens/device_push_screen.dart';
+import 'package:Expeditious_Commissioning/screens/device_push_screen.dart';
 import '../helpers/db_helper.dart';
 import 'qr_scanner_screen.dart'; // Import QRScannerScreen
 import 'scanned_wac_screen.dart'; // Import ScannedWACScreen

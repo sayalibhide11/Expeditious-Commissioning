@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/screens/wac_screen.dart';
+import 'package:Expeditious_Commissioning/screens/wac_screen.dart';
 import 'dart:async';
-import 'package:flutter_project/screens/qr_scanner_screen.dart'; // Import QRScannerScreen
+import 'package:Expeditious_Commissioning/screens/qr_scanner_screen.dart'; // Import QRScannerScreen
 
 void main() {
   runApp(MyApp());
