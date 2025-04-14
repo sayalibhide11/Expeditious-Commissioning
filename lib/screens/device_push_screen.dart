@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'qr_scanner_screen.dart';
+import 'code_scanner_screen.dart';
 import 'wac_screen.dart'; // Make sure to import the necessary WACScreen widget.
 import '../helpers/db_helper.dart'; // Import the DBHelper class.
 
@@ -26,7 +26,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     final wacDeviceMappings = await dbHelper.getWacDeviceMappings(widget.wacId);
     final deviceIds =
         wacDeviceMappings
-            .map((mapping) => mapping['device_ids'] as String)
+            .map((mapping) => mapping['device_id'] as String)
             .toList();
     // Fetch devices matching the retrieved device IDs
     final data = await dbHelper.getDevicesByIds(deviceIds);
@@ -48,7 +48,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
             // Add both buttons here (Scan and Delete All)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [_buildScanWacButton(context), _buildDeleteAllButton()],
+              children: [_buildScanWacButton(context)],
             ),
             const SizedBox(height: 20),
             _buildDeviceListTitle(),
@@ -68,44 +68,32 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     return AppBar(title: const Text('Device List'));
   }
 
-  // Button to navigate to the QR Scanner screen
+  // Button to navigate to the Code Scanner screen
   Widget _buildScanWacButton(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
         final scannedValue = await Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => QRScannerScreen()),
+          MaterialPageRoute(builder: (context) => CodeScannerScreen()),
         );
 
         if (scannedValue != null) {
           final dbHelper = DBHelper();
-          final deviceId = DateTime.now().toIso8601String(); // Generate a unique device ID
           await dbHelper.insertDevice({
-            'id': deviceId,
-            'macid': scannedValue, // Use the scanned value
+            'mac_id': scannedValue, // Use the scanned value
           });
           await dbHelper.insertWacDeviceMapping({
-            'wacids': widget.wacId,
-            'device_ids': deviceId,
+            'wac_id': widget.wacId,
+            'device_id': scannedValue,
           });
+
+          await dbHelper.updateWacPushRequired(widget.wacId, 0); // Set is_push_required to 0
 
           // Refresh the device list
           _fetchDeviceList();
         }
       },
       child: const Text('Scan Device'),
-    );
-  }
-
-  // Button to delete all devices
-  Widget _buildDeleteAllButton() {
-    return ElevatedButton(
-      onPressed: () async {
-        // Delete all entries in the WAC table
-        await dbHelper.deleteAllDevices();
-        _fetchDeviceList(); // Refresh the list
-      },
-      child: const Text('Delete All Devices'),
     );
   }
 
@@ -126,7 +114,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
           final device =
               deviceList[index]; // Extract the map for the current device
           return ListTile(
-            title: Text(device['macid'] ?? 'No MAC ID'), // Display the MAC ID
+            title: Text(device['mac_id'] ?? 'No MAC ID'), // Display the MAC ID
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () async {
@@ -146,34 +134,41 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   Widget _buildActionButtons(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [_buildBackButton(context), _buildPushButton()],
+      children: [_buildPushButton()],
     );
   }
 
-  // Back button: Navigate to WACScreen
-  Widget _buildBackButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        // Navigate back to WACScreen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => WACScreen(), // Navigates to WACScreen
-          ),
+  Widget _buildPushButton() {
+    return FutureBuilder<int>(
+      future: dbHelper.getWacPushRequired(
+        widget.wacId,
+      ), // Fetch is_push_required value
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return ElevatedButton(
+            onPressed: null, // Disable button while loading
+            child: const Text('Push'),
+          );
+        }
+
+        final isPushRequired =
+            snapshot.data == 0; // Enable if is_push_required is 0
+
+        return ElevatedButton(
+          onPressed:
+              isPushRequired
+                  ? () async {
+                    // Perform action on Push
+                    await dbHelper.updateWacPushRequired(
+                      widget.wacId,
+                      1,
+                    ); // Set is_push_required to 1
+                    setState(() {}); // Refresh the UI
+                  }
+                  : null, // Disable button if is_push_required is 1
+          child: const Text('Push'),
         );
       },
-      child: const Text('Back'),
-    );
-  }
-
-  // Push button: You can define the action you want here (e.g., saving data)
-  Widget _buildPushButton() {
-    return ElevatedButton(
-      onPressed: () {
-        // Perform action on Push (e.g., save data)
-        debugPrint('Push button clicked');
-      },
-      child: const Text('Push'),
     );
   }
 }

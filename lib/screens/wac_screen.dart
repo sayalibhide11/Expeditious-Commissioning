@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:Expeditious_Commissioning/screens/device_push_screen.dart';
 import '../helpers/db_helper.dart';
-import 'qr_scanner_screen.dart'; // Import QRScannerScreen
+import 'code_scanner_screen.dart'; // Import CodeScannerScreen
 import 'scanned_wac_screen.dart'; // Import ScannedWACScreen
 
 class WACScreen extends StatefulWidget {
@@ -22,7 +22,6 @@ class _WACScreenState extends State<WACScreen> {
 
   Future<void> _fetchWacList() async {
     final data = await dbHelper.getWacs();
-    print('Fetched WAC List: $data'); // Debug: Print the fetched data
     setState(() {
       wacList = data;
     });
@@ -31,121 +30,169 @@ class _WACScreenState extends State<WACScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('WAC List')),
-      body: Column(
-        children: [
-          // Button at the top-center of the screen
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red, // Button color
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: Container(
+          padding: const EdgeInsets.only(top: 40, left: 16, right: 16),
+          decoration: const BoxDecoration(
+        color: Color(0xFF001a72),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(0),
+          bottomRight: Radius.circular(0),
+        ),
+          ),
+          child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          'WACs',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+          ),
+        ),
+          ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Scan WAC Button
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(0),
+              ),
+              child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                Row(
+                  children: [
+                  Icon(Icons.info, color: Color(0xFF001A72)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Scan QR Code to add WAC',
+                    style: TextStyle(
+                    color: Color(0xFF001A72),
+                    fontSize: 12,
+                    ),
+                  ),
+                  ],
                 ),
-                onPressed: () async {
-                  final scannedValue = await Navigator.push(
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity, // Set width to 100%
+                  child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF001A72),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10), // Rounded edges
+                    ),
+                  ),
+                  onPressed: () async {
+                    final scannedValue = await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => QRScannerScreen()),
-                  );
+                    MaterialPageRoute(builder: (context) => CodeScannerScreen()),
+                    );
 
-                  if (scannedValue != null) {
+                    if (scannedValue != null) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                ScannedWACScreen(scannedWAC: scannedValue),
+                      builder: (context) =>
+                        ScannedWACScreen(scannedWAC: scannedValue),
                       ),
                     );
-                  }
-                },
-                child: Text(
-                  'Scan WAC',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
-              ),
-            ),
-          ),
-
-          // Text "WAC List" below the button
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10.0),
-            child: Text(
-              'WAC List',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-          ),
-
-          // Button to delete all WACs
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10.0),
-            child: Container(
-              alignment: Alignment.centerRight,
-              margin: const EdgeInsets.only(right: 16.0),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue, // Button color
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                ),
-                onPressed: () async {
-                  // Delete all entries in the WAC table
-                  await dbHelper.deleteAllWacs();
-                  _fetchWacList(); // Refresh the list
-                },
-                child: Text(
-                  'Delete All WACs',
-                  style: TextStyle(
-                    color: const Color.fromARGB(255, 31, 30, 30),
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // List of WACs below the "WAC List" text
-          Expanded(
-            child: ListView.builder(
-              itemCount: wacList.length,
-              itemBuilder: (context, index) {
-                final wac = wacList[index];
-                return ListTile(
-                  title: Text(
-                    wac['macid'] ?? 'No MAC ID',
-                  ), // Handle null values
-                  subtitle: Text(
-                    wac['ip'] ?? 'No IP Address',
-                  ), // Handle null values
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () async {
-                      // Delete the specific WAC entry
-                      await dbHelper.deleteWac(wac['id']);
-                      _fetchWacList(); // Refresh the list
-                    },
-                  ),
-                  onTap: () {
-                    // Navigate to DevicePushScreen with the WAC ID
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => DeviceListScreen(
-                              wacId: wac['id'],
-                            ), // Pass WAC ID
-                      ),
-                    );
+                    }
                   },
-                );
-              },
+                  icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+                  label: const Text(
+                    'Scan WAC',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                  ),
+                ),
+                ],
+              ),
+              ),
             ),
-          ),
-        ],
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(0),
+              ),
+              child: SizedBox(
+              height: wacList.isEmpty ? 100 : wacList.length * 72.0, // Adjust height dynamically
+              child: Center(
+                child: wacList.isEmpty
+                  ? const Center(
+                  child: Text(
+                  'No WACs available.',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  )
+                  : ListView.builder(
+                  itemCount: wacList.length,
+                  itemBuilder: (context, index) {
+                  final wac = wacList[index];
+                  bool isChecked = false; // Track checkbox state
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 0.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(0),
+                    ),
+                    child: ListTile(
+                    leading: StatefulBuilder(
+                    builder: (context, setState) {
+                      return Checkbox(
+                      value: isChecked,
+                      checkColor: Colors.white,
+                      activeColor: Color(0xFF001a72),
+                      onChanged: (bool? value) {
+                      setState(() {
+                      isChecked = value ?? false;
+                      });
+                      },
+                      );
+                    },
+                    ),
+                    title: Text(
+                    wac['mac_id'] ?? 'No MAC ID',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                    wac['ip_address'] ?? 'No IP Address',
+                    style: const TextStyle(color: Colors.grey),
+                    ),
+                    trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.black),
+                    onPressed: () async {
+                    await dbHelper.deleteWac(wac['mac_id']);
+                    _fetchWacList();
+                    },
+                    ),
+                    onTap: () {
+                    Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DeviceListScreen(
+                      wacId: wac['mac_id'],
+                      ),
+                    ),
+                    );
+                    },
+                    ),
+                  );
+                  },
+                  ),
+              ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -25,16 +25,18 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
   void initState() {
     super.initState();
     final scannedData = widget.scannedWAC;
-    final macRegex = RegExp(r'MAC:\s*([A-Fa-f0-9:]{17})');
+    final macRegex = RegExp(r'([A-Fa-f0-9:]{17})');
     final match = macRegex.firstMatch(scannedData);
 
     if (match != null) {
-      macAddressController.text = match.group(1)!; // Autofill MAC ID
+      final rawMacId = match.group(1)!;
+      final formattedMacId = rawMacId.replaceAll(':', '').toLowerCase();
+      macAddressController.text = formattedMacId; // Autofill formatted MAC ID
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Invalid MAC ID')),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid MAC ID')),
+        );
       });
     }
   }
@@ -42,50 +44,78 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Scanned WAC Screen')),
+      appBar: AppBar(
+        title: Text(
+        'Add WAC',
+        style: TextStyle(color: Colors.white), // Set title color to white
+      ),
+        backgroundColor: Color(0xFF001a72), // Same format as Save button
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Scanned WAC: ${widget.scannedWAC}',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: macAddressController,
-              decoration: InputDecoration(
-                labelText: 'MAC ID',
-                border: OutlineInputBorder(),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
-              enabled: false, // Disable the MAC ID field
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: ipAddressController,
-              decoration: InputDecoration(
-              labelText: 'IP Address',
-              border: OutlineInputBorder(),
-              errorText: _isValidIp(ipAddressController.text)
-                ? null
-                : 'Invalid IP Address',
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: macAddressController,
+                      decoration: InputDecoration(
+                        labelText: 'MAC ID',
+                        border: OutlineInputBorder(),
+                      ),
+                      enabled: false, // Disable the MAC ID field
+                    ),
+                    SizedBox(height: 20),
+                    TextField(
+                      controller: ipAddressController,
+                      decoration: InputDecoration(
+                        labelText: 'IP Address',
+                        border: OutlineInputBorder(),
+                        errorText: _isValidIp(ipAddressController.text)
+                            ? null
+                            : 'Invalid IP Address',
+                      ),
+                      onChanged: (value) {
+                        setState(() {}); // Trigger UI update for validation
+                      },
+                    ),
+                  ],
+                ),
               ),
-              onChanged: (value) {
-              setState(() {}); // Trigger UI update for validation
-              },
             ),
             SizedBox(height: 40),
+            Spacer(), // Push buttons to the bottom
+            Divider(
+              color: Colors.grey, // Grey color for the border line
+              thickness: 1, // Adjust thickness for better visibility
+            ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end, // Align buttons to the right
               children: [
-                ElevatedButton(
+                OutlinedButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: Text('Cancel'),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey), // Grey outline
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8), // Rounded edges
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.black), // Black text
+                  ),
                 ),
-                // filepath: d:\Flutter\Expeditious-Commissioning\lib\screens\scanned_wac_screen.dart
+                SizedBox(width: 10), // Add spacing between buttons
                 ElevatedButton(
                   onPressed: () async {
                     // Collect data from text fields
@@ -101,23 +131,55 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
 
                     // Insert data into the `wacs` table
                     final dbHelper = DBHelper();
-                    final wacId = DateTime.now().toIso8601String();
-                    await dbHelper.insertWac({
-                      'id': wacId,
-                      'macid': macId,
-                      'ip': ipAddress,
-                      'ispushrequired': 0, // Default value for ispushrequired
-                    });
+                    try {
+                      await dbHelper.insertWac({
+                      'mac_id': macId,
+                      'ip_address': ipAddress,
+                      'is_push_required': 0, // Default value for is_push_required
+                      });
+                    } catch (e) {
+                      if (e.toString().contains('UNIQUE constraint failed')) {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                        title: Text('Error'),
+                        content: Text('This WAC is already added.'),
+                        actions: [
+                          TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text('OK'),
+                          ),
+                        ],
+                        ),
+                      );
+                      } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('An unexpected error occurred')),
+                      );
+                      }
+                      return;
+                    }
 
                     // Navigate to the next screen
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DeviceListScreen(wacId: wacId),
+                        builder: (context) => DeviceListScreen(wacId: macId),
                       ),
                     );
                   },
-                  child: Text('Next'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF001a72), // Background color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8), // Rounded edges
+                    ),
+                  ),
+                  child: Text(
+                    'Save',
+                    style: TextStyle(color: Colors.white), // White text
+                  ),
                 ),
               ],
             ),
