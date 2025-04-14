@@ -145,20 +145,20 @@ class _WACScreenState extends State<WACScreen> {
                       borderRadius: BorderRadius.circular(0),
                     ),
                     child: ListTile(
-                    leading: StatefulBuilder(
-                    builder: (context, setState) {
-                      return Checkbox(
-                      value: isChecked,
-                      checkColor: Colors.white,
-                      activeColor: Color(0xFF001a72),
-                      onChanged: (bool? value) {
-                      setState(() {
-                      isChecked = value ?? false;
-                      });
-                      },
-                      );
-                    },
-                    ),
+                    // leading: StatefulBuilder(
+                    // builder: (context, setState) {
+                    //   return Checkbox(
+                    //   value: isChecked,
+                    //   checkColor: Colors.white,
+                    //   activeColor: Color(0xFF001a72),
+                    //   onChanged: (bool? value) {
+                    //   setState(() {
+                    //   isChecked = value ?? false;
+                    //   });
+                    //   },
+                    //   );
+                    // },
+                    // ),
                     title: Text(
                     wac['mac_id'] ?? 'No MAC ID',
                     style: const TextStyle(fontWeight: FontWeight.bold),
