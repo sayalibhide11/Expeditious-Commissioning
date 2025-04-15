@@ -119,12 +119,13 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                           ),
                         ),
                         onPressed: () async {
-                          final scannedValue = await Navigator.push(
+                          var scannedValue = await Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => CodeScannerScreen()),
                           );
 
                           if (scannedValue != null) {
+                            scannedValue = scannedValue.replaceAll(':', '').toLowerCase();
                             final result = await dbHelper.insertDevice({'mac_id': scannedValue});
                             if (result == 0) {
                               print('Device already exists in the database.');
@@ -233,7 +234,9 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                   .toList();
 
                 final url = Uri.parse('https://$ipAddress/v2/devicesToPair');
-                final body = {'devices': macIds};
+                final body = {
+                  'eui64List': macIds.map((macId) => macId).toList(),
+                };
 
                 try {
                 final response = await http.post(
