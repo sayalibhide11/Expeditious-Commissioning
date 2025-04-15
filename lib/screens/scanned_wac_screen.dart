@@ -50,6 +50,7 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
         style: TextStyle(color: Colors.white), // Set title color to white
       ),
         backgroundColor: Color(0xFF001a72), // Same format as Save button
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -93,10 +94,10 @@ class _ScannedWACScreenState extends State<ScannedWACScreen> {
             ),
             SizedBox(height: 40),
             Spacer(), // Push buttons to the bottom
-            Divider(
-              color: Colors.grey, // Grey color for the border line
-              thickness: 1, // Adjust thickness for better visibility
-            ),
+            // Divider(
+            //   color: Colors.grey, // Grey color for the border line
+            //   thickness: 1, // Adjust thickness for better visibility
+            // ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end, // Align buttons to the right
               children: [

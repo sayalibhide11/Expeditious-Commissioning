@@ -92,7 +92,37 @@ class DBHelper {
 
   Future<int> deleteWac(String id) async {
     final db = await database;
-    return await db.delete('wacs', where: 'mac_id = ?', whereArgs: [id]);
+
+    // Get the device IDs associated with the WAC ID from the mapping table
+    final mappings = await db.query(
+      'wac_devices_mapping',
+      columns: ['device_id'],
+      where: 'wac_id = ?',
+      whereArgs: [id],
+    );
+
+    // Extract the device IDs
+    final deviceIds = mappings.map((mapping) => mapping['device_id'] as String).toList();
+
+    // Delete the entries in the wac_devices_mapping table
+    await db.delete(
+      'wac_devices_mapping',
+      where: 'wac_id = ?',
+      whereArgs: [id],
+    );
+
+    // Delete the devices associated with the WAC ID
+    if (deviceIds.isNotEmpty) {
+      final ids = deviceIds.map((deviceId) => "'$deviceId'").join(', ');
+      await db.rawDelete('DELETE FROM devices WHERE mac_id IN ($ids)');
+    }
+
+    // Finally, delete the WAC entry
+    return await db.delete(
+      'wacs',
+      where: 'mac_id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<List<Map<String, dynamic>>> getDevices() async {
@@ -108,6 +138,15 @@ class DBHelper {
 
   Future<int> deleteDevice(String id) async {
     final db = await database;
+
+    // Delete the device entry from wac_devices_mapping table
+    await db.delete(
+      'wac_devices_mapping',
+      where: 'device_id = ?',
+      whereArgs: [id],
+    );
+
+    // Delete the device entry from devices table
     return await db.delete('devices', where: 'mac_id = ?', whereArgs: [id]);
   }
 

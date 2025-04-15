@@ -61,6 +61,29 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            FutureBuilder<Map<String, dynamic>>(
+              future: dbHelper.getWacDetails(widget.wacId), // Fetch WAC details
+              builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!['ip_address'] == null) {
+                return const Text(
+                'WAC IP Address: Not available',
+                style: TextStyle(fontSize: 16, color: Colors.red),
+                );
+              } else {
+                final ipAddress = snapshot.data!['ip_address'];
+                return Container(
+                margin: const EdgeInsets.only(bottom: 4), // Add 4px margin at the bottom
+                child: Text(
+                  'WAC IP Address: $ipAddress',
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                ),
+                );
+              }
+              },
+            ),
+            
             // First card with Scan Device button and info icon
             Card(
               elevation: 4,
@@ -73,7 +96,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.info, color: Color(0xFF001A72)),
+                         Icon(Icons.info, color: Color(0xFF001A72), size: 20),
                         SizedBox(width: 8),
                         Text(
                           'Scan QR Code to add WAC',
@@ -98,7 +121,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                         onPressed: () async {
                           final scannedValue = await Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => WACScreen()),
+                            MaterialPageRoute(builder: (context) => CodeScannerScreen()),
                           );
 
                           if (scannedValue != null) {
@@ -188,7 +211,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
 
 
         final isPushRequired =
-            snapshot.data == 0; // Enable if is_push_required is 0
+            snapshot.data == 0 && deviceList.isNotEmpty; // Enable if is_push_required is 0 and deviceList is not empty
 
         return FloatingActionButton.extended(
             onPressed: isPushRequired

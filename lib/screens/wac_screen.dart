@@ -14,6 +14,7 @@ class WACScreen extends StatefulWidget {
 class _WACScreenState extends State<WACScreen> with RouteAware {
   final DBHelper dbHelper = DBHelper();
   List<Map<String, dynamic>> wacList = [];
+  bool isLoading = true; // Add loading state
 
  @override
   void initState() {
@@ -54,37 +55,27 @@ class _WACScreenState extends State<WACScreen> with RouteAware {
   }
 
   Future<void> _fetchWacList() async {
+    setState(() {
+      isLoading = true; // Start loading
+    });
+
     final data = await dbHelper.getWacs();
+
     setState(() {
       wacList = data;
+      isLoading = false; // Stop loading
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: const BoxDecoration(
-        color: Color(0xFF001a72),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(0),
-          bottomRight: Radius.circular(0),
+      appBar: AppBar(
+        title: const Text(
+          'Wacs',
+          style: TextStyle(color: Colors.white),
         ),
-          ),
-          child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          'WACs',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-          ),
-        ),
-          ),
-        ),
+        backgroundColor: const Color(0xFF001a72),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -103,7 +94,7 @@ class _WACScreenState extends State<WACScreen> with RouteAware {
                 children: [
                 Row(
                   children: [
-                  Icon(Icons.info, color: Color(0xFF001A72)),
+                    Icon(Icons.info, color: Color(0xFF001A72), size: 20),
                   SizedBox(width: 8),
                   Text(
                     'Scan QR Code to add WAC',
@@ -160,7 +151,11 @@ class _WACScreenState extends State<WACScreen> with RouteAware {
               child: SizedBox(
               height: wacList.isEmpty ? 100 : wacList.length * 72.0, // Adjust height dynamically
               child: Center(
-                child: wacList.isEmpty
+                child: isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(), // Show loading indicator
+                      )
+                    :wacList.isEmpty
                   ? const Center(
                   child: Text(
                   'No WACs available.',
