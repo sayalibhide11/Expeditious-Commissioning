@@ -4,20 +4,53 @@ import 'package:Expeditious_Commissioning/screens/device_push_screen.dart';
 import '../helpers/db_helper.dart';
 import 'code_scanner_screen.dart'; // Import CodeScannerScreen
 import 'scanned_wac_screen.dart'; // Import ScannedWACScreen
+import 'package:Expeditious_Commissioning/main.dart'; // Import routeObserver
 
 class WACScreen extends StatefulWidget {
   @override
   _WACScreenState createState() => _WACScreenState();
 }
 
-class _WACScreenState extends State<WACScreen> {
+class _WACScreenState extends State<WACScreen> with RouteAware {
   final DBHelper dbHelper = DBHelper();
   List<Map<String, dynamic>> wacList = [];
 
-  @override
+ @override
   void initState() {
     super.initState();
     _fetchWacList();
+  }
+
+  @override
+    void didChangeDependencies() {
+    super.didChangeDependencies();
+    final ModalRoute? modalRoute = ModalRoute.of(context);
+    if (modalRoute is PageRoute) {
+      // Register this widget as a RouteAware
+      routeObserver.subscribe(this, modalRoute);
+    }
+  }
+
+  @override
+  void dispose() {
+    // Unsubscribe from the RouteObserver
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPush() {
+    // Called when this route is pushed onto the navigator stack
+    super.didPush();
+    print('WACScreen: didPush');
+  }
+
+  @override
+  void didPopNext() {
+    // Called when returning to this route from another route
+    super.didPopNext();
+    print('WACScreen: didPopNext');
+    _fetchWacList(); // Refresh the WAC list when returning to this screen
   }
 
   Future<void> _fetchWacList() async {
@@ -31,9 +64,9 @@ class _WACScreenState extends State<WACScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Container(
-          padding: const EdgeInsets.only(top: 40, left: 16, right: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: const BoxDecoration(
         color: Color(0xFF001a72),
         borderRadius: BorderRadius.only(

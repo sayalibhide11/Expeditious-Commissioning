@@ -118,24 +118,31 @@ class _CodeScannerScreenState extends State<CodeScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan Code'),
-        actions: [
-          IconButton(
-            icon: ValueListenableBuilder(
-              valueListenable: _controller.torchState,
-              builder: (context, torchState, child) {
-                return Icon(
-                  torchState == TorchState.on
-                      ? Icons
-                          .flash_on // Hex code: 0xe3b0
-                      : Icons.flash_off, // Hex code: 0xe3b1
-                );
-              },
-            ),
-            onPressed: () => _controller.toggleTorch(),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          backgroundColor: const Color(0xFF001a72),
+          iconTheme: const IconThemeData(color: Colors.white),
+          title: const Text(
+        'Scan Code',
+        style: TextStyle(color: Colors.white),
           ),
-        ],
+          actions: [
+        IconButton(
+          icon: ValueListenableBuilder(
+            valueListenable: _controller.torchState,
+            builder: (context, torchState, child) {
+          return Icon(
+            torchState == TorchState.on
+            ? Icons.flash_on // Hex code: 0xe3b0
+            : Icons.flash_off, // Hex code: 0xe3b1
+          );
+            },
+          ),
+          onPressed: () => _controller.toggleTorch(),
+        ),
+          ],
+        ),
       ),
       body: Stack(
         children: [

@@ -44,6 +44,17 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF001a72),
+        iconTheme: const IconThemeData(color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back), // Custom back arrow
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => WACScreen()),
+              (route) => false, // Remove all previous routes
+            );
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -87,7 +98,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                         onPressed: () async {
                           final scannedValue = await Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => CodeScannerScreen()),
+                            MaterialPageRoute(builder: (context) => WACScreen()),
                           );
 
                           if (scannedValue != null) {
