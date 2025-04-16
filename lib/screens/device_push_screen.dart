@@ -18,6 +18,8 @@ class DeviceListScreen extends StatefulWidget {
 
 class _DeviceListScreenState extends State<DeviceListScreen> {
   String token = '';
+  bool isLoading = false; // To manage the loading state
+  bool isPushRequired = true; // Global flag to enable/disable the push button
 
   final DBHelper dbHelper = DBHelper();
 
@@ -157,6 +159,9 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                               widget.wacId,
                               0,
                             );
+                            setState(() {
+                              isPushRequired = true; // Enable push button
+                            });
                             _fetchDeviceList();
                           }
                         },
@@ -227,58 +232,73 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                 ),
               ),
             ),
+            if (isLoading)
+            const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF001A72)), // Set loader color
+              ), // Show loader
+            ),
           ],
         ),
       ),
-      floatingActionButton:
-          _buildPushButton(), // Add the button to the bottom right
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton:FloatingActionButton.extended(
+        onPressed: isPushRequired
+            ? () async {
+                await handlePush();
+              }
+            : null, // Disable button if isPushRequired is false
+        label: const Text('Push'),
+        icon: const Icon(Icons.cloud_upload),
+        backgroundColor:
+            isPushRequired ? const Color(0xFF001A72) : Colors.grey,
+        foregroundColor: isPushRequired ? Colors.white : Colors.black,
+      ),
     );
   }
 
-  _buildPushButton() {
-    return FutureBuilder<int>(
-      future: dbHelper.getWacPushRequired(
-        widget.wacId,
-      ), // Fetch is_push_required value
-      builder: (context, snapshot) {
-        final isPushRequired =
-            snapshot.data == 0 &&
-            deviceList
-                .isNotEmpty; // Enable if is_push_required is 0 and deviceList is not empty
+  // _buildPushButton() {
+  //   return FutureBuilder<int>(
+  //     future: dbHelper.getWacPushRequired(
+  //       widget.wacId,
+  //     ), // Fetch is_push_required value
+  //     builder: (context, snapshot) {
+  //       final isPushRequired =
+  //           snapshot.data == 0 &&
+  //           deviceList
+  //               .isNotEmpty; // Enable if is_push_required is 0 and deviceList is not empty
 
-        return FloatingActionButton.extended(
-          onPressed:
-              isPushRequired
-                  ? () async {
-                    // Fetch the IP address of the WAC from the database
-                    final wacDetails = await dbHelper.getWacDetails(
-                      widget.wacId,
-                    );
-                    final ipAddress = wacDetails['ip_address'];
+  //       return FloatingActionButton.extended(
+  //         onPressed:
+  //             isPushRequired
+  //                 ? () async {
+  //                   // Fetch the IP address of the WAC from the database
+  //                   final wacDetails = await dbHelper.getWacDetails(
+  //                     widget.wacId,
+  //                   );
+  //                   final ipAddress = wacDetails['ip_address'];
 
-                    if (ipAddress == null || ipAddress.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('WAC IP address not found'),
-                        ),
-                      );
-                    }
+  //                   if (ipAddress == null || ipAddress.isEmpty) {
+  //                     ScaffoldMessenger.of(context).showSnackBar(
+  //                       const SnackBar(
+  //                         content: Text('WAC IP address not found'),
+  //                       ),
+  //                     );
+  //                   }
 
-                    await login();
-                    await pushTowac();
+  //                   await login();
+  //                   await pushTowac();
 
-                  }
-                  : null, // Disable button if is_push_required is 1
-          label: const Text('Push'),
-          icon: const Icon(Icons.cloud_upload),
-          backgroundColor:
-              isPushRequired ? const Color(0xFF001A72) : Colors.grey,
-          foregroundColor: isPushRequired ? Colors.white : Colors.black,
-        );
-      },
-    );
-  }
+  //                 }
+  //                 : null, // Disable button if is_push_required is 1
+  //         label: const Text('Push'),
+  //         icon: const Icon(Icons.cloud_upload),
+  //         backgroundColor:
+  //             isPushRequired ? const Color(0xFF001A72) : Colors.grey,
+  //         foregroundColor: isPushRequired ? Colors.white : Colors.black,
+  //       );
+  //     },
+  //   );
+  // }
 
   login() async {
     final wacDetails = await dbHelper.getWacDetails(widget.wacId);
@@ -327,6 +347,36 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     }
     else{
       print('push failedddd....');
+    }
+  }
+
+  Future<void> handlePush() async {
+    setState(() {
+      isLoading = true; // Show loader
+    });
+
+    try {
+      await login(); // First API call
+      await pushTowac(); // Second API call
+
+      // Update is_push_required to 1 in the WAC table
+      await dbHelper.updateWacPushRequired(widget.wacId, 1);
+
+      setState(() {
+        isPushRequired = false; // Disable push button on success
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Push successful')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to push: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false; // Hide loader
+      });
     }
   }
 }
