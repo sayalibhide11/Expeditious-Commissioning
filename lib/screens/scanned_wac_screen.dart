@@ -5,7 +5,7 @@ import '../helpers/db_helper.dart'; // Import the DBHelper class
 class ScannedWACScreen extends StatefulWidget {
   final String scannedWAC;
 
-  ScannedWACScreen({required this.scannedWAC});
+  const ScannedWACScreen({super.key, required this.scannedWAC});
 
   @override
   _ScannedWACScreenState createState() => _ScannedWACScreenState();

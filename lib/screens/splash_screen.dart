@@ -19,6 +19,8 @@ class MyApp extends StatelessWidget {
 }
 
 class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     // Show the splash screen with an image for 3 seconds before navigating to WACScreen

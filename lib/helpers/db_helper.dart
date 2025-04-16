@@ -24,14 +24,14 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 6, // Increment the version
+      version: 7, // Increment the version
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
   }
 
   FutureOr<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 6) {
+    if (oldVersion < 7) {
       // Drop the existing devices table
       await db.execute('DROP TABLE IF EXISTS devices');
 
@@ -175,13 +175,17 @@ class DBHelper {
     return await db.insert('wac_devices_mapping', mapping);
   }
 
-  Future<List<Map<String, dynamic>>> getWacDeviceMappings(String wacId) async {
+   getWacDeviceMappings(String wacId) async {
     final db = await database;
-    return await db.query(
-      'wac_devices_mapping',
-      where: 'wac_id = ?',
-      whereArgs: [wacId],
-    );
+  final result = await db.query(
+    'wac_devices_mapping',
+    columns: ['device_id'], // Only fetch the device_id column
+    where: 'wac_id = ?',
+    whereArgs: [wacId],
+  );
+
+  // Explicitly map the result to a List<String>
+  return result.map((mapping) => mapping['device_id'] as String).toList();
   }
 
   Future<List<Map<String, dynamic>>> getDevicesByIds(
